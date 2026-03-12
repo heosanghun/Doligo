@@ -1,0 +1,1 @@
+"""Doligo backend application."""

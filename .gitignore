@@ -1,0 +1,44 @@
+# 환경 변수 (API 키 포함 - 절대 커밋 금지)
+.env
+*.env
+!*.env.example
+backend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+frontend/dist/
+*.log
+npm-debug.log*
+
+# 업로드/생성 파일
+uploads/
+outputs/
+*.pdf
+*.pptx
+*.hwpx
+*_content.json
+
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 로컬 이미지 소스 (public에 복사된 것만 배포)
+image/
