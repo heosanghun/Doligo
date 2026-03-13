@@ -1,0 +1,7 @@
+name = "doligo-chat"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+[vars]
+# 빌드 시 치환되거나, 대시보드에서 Secrets로 설정
+# GEMINI_API_KEY는 Secrets로 설정 (암호화됨)
