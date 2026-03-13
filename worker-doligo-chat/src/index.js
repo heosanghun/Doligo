@@ -101,7 +101,7 @@ export default {
       });
     }
 
-    const apiKey = env.GEMINI_API_KEY || env.BEMINI_API_KEV;
+    const apiKey = env.GEMINI_API_KEY || env.GOOGLE_API_KEY || env.BEMINI_API_KEV;
     if (!apiKey || !apiKey.trim()) {
       return new Response(
         JSON.stringify({ detail: "GEMINI_API_KEY가 설정되지 않았습니다. Worker Secrets에서 설정하세요." }),

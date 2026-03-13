@@ -78,7 +78,7 @@ export function FileUpload({ file, onFileChange, onStart, keywords, url, chatSum
         const msg = detail || res.statusText || "요청 실패";
         throw new Error(
           res.status === 404 && isDeployed()
-            ? "백엔드 API를 찾을 수 없습니다. 백엔드가 배포되었는지, VITE_API_URL이 올바른지 확인하세요."
+            ? "문서 생성은 Python 백엔드가 필요합니다. doligo-chat Worker는 채팅만 지원합니다. Railway/Render에 백엔드를 배포한 뒤 VITE_API_URL을 백엔드 주소로 변경하세요. (.github/BACKEND_DEPLOY.md)"
             : msg
         );
       }

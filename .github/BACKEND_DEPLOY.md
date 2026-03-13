@@ -1,6 +1,6 @@
 # 백엔드 배포 가이드 (Railway / Render)
 
-프론트엔드(doligo.pages.dev)에서 채팅·문서 생성이 동작하려면 백엔드 API를 배포해야 합니다.
+> **현재 상태**: doligo-chat Worker로 **채팅만** 동작. **문서 생성**은 Python 백엔드 필요.
 
 ## Railway로 배포 (권장)
 
@@ -11,13 +11,16 @@
 5. **Variables**에 환경 변수 설정:
    - `GOOGLE_API_KEY`: Gemini API 키
    - `CORS_ORIGINS`: `https://doligo.pages.dev`
-6. 배포 후 **Settings** → **Generate Domain**으로 URL 확인 (예: `https://xxx.railway.app`)
+6. 배포 후 **Settings** → **Networking** → **Generate Domain**으로 URL 확인 (예: `https://xxx.railway.app`)
 
-## Cloudflare Pages 환경 변수 설정
+## Cloudflare Pages 환경 변수 변경
 
 1. Cloudflare Dashboard → Pages → doligo → **설정** → **환경 변수**
-2. **VITE_API_URL** 추가: `https://xxx.railway.app` (Railway에서 생성한 URL)
+2. **VITE_API_URL** 값을 Railway URL로 변경: `https://xxx.railway.app`
+   - 기존 `https://doligo-chat.wwwhunycom07.workers.dev` → Railway URL로 교체
 3. **다시 배포** 실행
+
+> Railway 백엔드에는 채팅(/api/chat)과 문서 생성(/api/generate)이 모두 포함됩니다.
 
 ## Render로 배포
 
