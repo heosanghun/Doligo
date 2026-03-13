@@ -5,13 +5,25 @@
 1. **GitHub 푸시**: 이 저장소를 GitHub에 푸시
 2. **Cloudflare Pages**: [Cloudflare Dashboard](https://dash.cloudflare.com) → Pages → Create project → Connect to Git
 
-## 배포 구성
+## 빌드 구성 (Build Configuration)
 
-### 프론트엔드 (정적 사이트)
+Cloudflare Pages **설정 → 빌드 구성**에서 아래와 같이 설정하세요.
 
-- **Build command**: `cd frontend && npm ci && npm run build`
-- **Build output directory**: `frontend/dist`
-- **Root directory**: `/` (프로젝트 루트)
+| 항목 | 값 |
+|------|-----|
+| **프레임워크 미리 설정** | None (또는 Vue/Vite) |
+| **빌드 명령** | `npm run build` |
+| **빌드 출력 디렉터리** | `dist` |
+| **루트 디렉터리 (고급)** | `frontend` |
+
+### 상세 설명
+
+- **루트 디렉터리**: `frontend`  
+  - `package.json`이 `frontend/` 폴더에 있으므로 반드시 설정
+- **빌드 명령**: `npm run build`  
+  - 루트가 `frontend`이므로 해당 폴더에서 실행됨
+- **빌드 출력 디렉터리**: `dist`  
+  - Vite 빌드 결과가 `frontend/dist`에 생성됨 (루트 기준)
 
 ### 환경 변수 (Cloudflare Pages)
 

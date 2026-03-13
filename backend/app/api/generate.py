@@ -120,10 +120,11 @@ async def _run_generation(
         if job.cancelled:
             return
 
-        # 5b. Save content for Markdown 보기 API (항상 저장)
+        # 5b. Save content for Markdown 보기 API (sections만 저장 - images는 bytes라 JSON 불가)
         import json
         content_path = Path(settings.output_dir) / f"{job_id}_content.json"
-        content_path.write_text(json.dumps(content, ensure_ascii=False, indent=2), encoding="utf-8")
+        content_to_save = {"sections": content.get("sections", [])}
+        content_path.write_text(json.dumps(content_to_save, ensure_ascii=False, indent=2), encoding="utf-8")
 
         update_job(
             job_id,
