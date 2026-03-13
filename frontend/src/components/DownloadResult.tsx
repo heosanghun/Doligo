@@ -7,15 +7,19 @@ interface DownloadResultProps {
   onReset?: () => void;
 }
 
+const getApiBase = () =>
+  (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? "";
+
 export function DownloadResult({ jobId, onReset }: DownloadResultProps) {
   const [showMd, setShowMd] = useState(false);
   const [mdContent, setMdContent] = useState("");
   const [copyDone, setCopyDone] = useState(false);
+  const apiBase = getApiBase();
 
   const { data, isLoading } = useQuery({
     queryKey: ["job", jobId],
     queryFn: async () => {
-      const res = await fetch(`/api/generate/${jobId}`);
+      const res = await fetch(`${apiBase}/api/generate/${jobId}`);
       if (!res.ok) throw new Error("조회 실패");
       return res.json();
     },
@@ -24,11 +28,11 @@ export function DownloadResult({ jobId, onReset }: DownloadResultProps) {
   });
 
   const handleDownload = () => {
-    window.open(`/api/generate/${jobId}/download`, "_blank");
+    window.open(`${apiBase}/api/generate/${jobId}/download`, "_blank");
   };
 
   const handleShowMd = async () => {
-    const res = await fetch(`/api/generate/${jobId}/content`);
+    const res = await fetch(`${apiBase}/api/generate/${jobId}/content`);
     if (!res.ok) return;
     const json = await res.json();
     setMdContent(json.markdown || "");

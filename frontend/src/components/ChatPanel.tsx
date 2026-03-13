@@ -32,9 +32,31 @@ export function ChatPanel({ url, onSummaryChange, onKeywordsExtracted }: ChatPan
     scrollToBottom();
   }, [messages, loading]);
 
+  const getApiBase = () =>
+    (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? "";
+
+  const isDeployed = () => {
+    if (typeof window === "undefined") return false;
+    const h = window.location.hostname;
+    return h !== "localhost" && h !== "127.0.0.1";
+  };
+
   const sendMessage = async (text: string, images?: File[]) => {
     const t = text.trim();
     if (!t && (!images || images.length === 0)) return;
+
+    const apiBase = getApiBase();
+    if (!apiBase && isDeployed()) {
+      setMessages((m) => [
+        ...m,
+        {
+          role: "assistant",
+          content:
+            "백엔드 API URL이 설정되지 않았습니다. Cloudflare Pages → 설정 → 환경 변수에서 VITE_API_URL을 백엔드 주소로 설정한 뒤 다시 배포해 주세요. (.github/BACKEND_DEPLOY.md 참고)",
+        },
+      ]);
+      return;
+    }
 
     const imageUrls: string[] = [];
     if (images?.length) {
@@ -54,7 +76,6 @@ export function ChatPanel({ url, onSummaryChange, onKeywordsExtracted }: ChatPan
         images.forEach((img) => formData.append("images", img));
       }
 
-      const apiBase = (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? "";
       const res = await fetch(`${apiBase}/api/chat`, {
         method: "POST",
         body: formData,
@@ -63,15 +84,16 @@ export function ChatPanel({ url, onSummaryChange, onKeywordsExtracted }: ChatPan
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const d = data as { detail?: string | { msg?: string }[] };
-        let errMsg = res.statusText;
+        let errMsg = res.statusText || `HTTP ${res.status}`;
         if (d.detail) {
           errMsg = Array.isArray(d.detail) ? d.detail[0]?.msg ?? String(d.detail) : String(d.detail);
         }
         if (res.status === 404) {
-          errMsg =
-            "API를 찾을 수 없습니다. 백엔드를 실행했는지 확인하세요: cd backend && uvicorn app.main:app --port 8000";
+          errMsg = isDeployed()
+            ? "백엔드 API를 찾을 수 없습니다. 백엔드가 배포되었는지, VITE_API_URL이 올바른지 확인하세요."
+            : "API를 찾을 수 없습니다. 백엔드를 실행했는지 확인하세요: cd backend && uvicorn app.main:app --port 8001";
         }
-        throw new Error(errMsg || "API 오류");
+        throw new Error(errMsg);
       }
       const reply = (data as { reply?: string }).reply ?? "";
       if (!reply) throw new Error("응답이 비어 있습니다. API 키를 확인하세요.");
@@ -83,7 +105,14 @@ export function ChatPanel({ url, onSummaryChange, onKeywordsExtracted }: ChatPan
       }
       setMessages((m) => [...m, { role: "assistant", content: reply }]);
     } catch (e) {
-      const errMsg = e instanceof Error ? e.message : "응답을 받지 못했습니다.";
+      const rawMsg = e instanceof Error ? e.message : "응답을 받지 못했습니다.";
+      const isNetwork =
+        rawMsg.includes("Failed to fetch") ||
+        rawMsg.includes("NetworkError") ||
+        rawMsg.includes("Load failed");
+      const errMsg = isNetwork
+        ? "백엔드 서버에 연결할 수 없습니다. 백엔드가 배포되었는지, VITE_API_URL과 CORS 설정을 확인하세요."
+        : rawMsg;
       setMessages((m) => [...m, { role: "assistant", content: `오류: ${errMsg}` }]);
     } finally {
       setLoading(false);

@@ -38,9 +38,25 @@ export function FileUpload({ file, onFileChange, onStart, keywords, url, chatSum
     onFileChange(f);
   };
 
+  const getApiBase = () =>
+    (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? "";
+
+  const isDeployed = () => {
+    if (typeof window === "undefined") return false;
+    const h = window.location.hostname;
+    return h !== "localhost" && h !== "127.0.0.1";
+  };
+
   const handleSubmit = async () => {
     if (!file || !keywords.trim()) {
       setError("키워드와 파일을 모두 입력하세요.");
+      return;
+    }
+    const apiBase = getApiBase();
+    if (!apiBase && isDeployed()) {
+      setError(
+        "백엔드 API URL이 설정되지 않았습니다. Cloudflare Pages → 설정 → 환경 변수에서 VITE_API_URL을 설정한 뒤 다시 배포해 주세요."
+      );
       return;
     }
     setLoading(true);
@@ -52,18 +68,31 @@ export function FileUpload({ file, onFileChange, onStart, keywords, url, chatSum
       if (url.trim()) form.append("url", url.trim());
       if (chatSummary.trim()) form.append("chat_summary", chatSummary.trim());
       form.append("file", file);
-      const res = await fetch("/api/generate", {
+      const res = await fetch(`${apiBase}/api/generate`, {
         method: "POST",
         body: form,
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || res.statusText || "요청 실패");
+        const detail = Array.isArray(err.detail) ? err.detail[0]?.msg : err.detail;
+        const msg = detail || res.statusText || "요청 실패";
+        throw new Error(
+          res.status === 404 && isDeployed()
+            ? "백엔드 API를 찾을 수 없습니다. 백엔드가 배포되었는지, VITE_API_URL이 올바른지 확인하세요."
+            : msg
+        );
       }
       const data = await res.json();
       onStart(data.job_id);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "오류");
+      const raw = e instanceof Error ? e.message : "오류";
+      const isNetwork =
+        raw.includes("Failed to fetch") || raw.includes("NetworkError") || raw.includes("Load failed");
+      setError(
+        isNetwork
+          ? "백엔드 서버에 연결할 수 없습니다. 백엔드가 배포되었는지, VITE_API_URL과 CORS 설정을 확인하세요."
+          : raw
+      );
     } finally {
       setLoading(false);
     }
