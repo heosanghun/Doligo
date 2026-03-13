@@ -74,24 +74,30 @@ async function callGemini(apiKey, prompt, imageParts = []) {
   return text;
 }
 
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Max-Age": "86400",
+};
+
 export default {
   async fetch(request, env, ctx) {
     if (request.method === "OPTIONS") {
-      return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-          "Access-Control-Max-Age": "86400",
-        },
-      });
+      return new Response(null, { headers: CORS });
     }
 
     const url = new URL(request.url);
+    if (url.pathname === "/health" || url.pathname === "/api/health") {
+      return new Response(JSON.stringify({ status: "ok" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...CORS },
+      });
+    }
     if (url.pathname !== "/api/chat" || request.method !== "POST") {
       return new Response(JSON.stringify({ detail: "Not Found" }), {
         status: 404,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...CORS },
       });
     }
 
@@ -99,7 +105,7 @@ export default {
     if (!apiKey || !apiKey.trim()) {
       return new Response(
         JSON.stringify({ detail: "GEMINI_API_KEY가 설정되지 않았습니다. Worker Secrets에서 설정하세요." }),
-        { status: 503, headers: { "Content-Type": "application/json" } }
+        { status: 503, headers: { "Content-Type": "application/json", ...CORS } }
       );
     }
 
@@ -111,7 +117,7 @@ export default {
       if (!messagesStr) {
         return new Response(JSON.stringify({ detail: "messages 필드가 필요합니다." }), {
           status: 400,
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...CORS },
         });
       }
 
@@ -121,7 +127,7 @@ export default {
       } catch {
         return new Response(JSON.stringify({ detail: "messages 형식 오류" }), {
           status: 400,
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...CORS },
         });
       }
 
@@ -144,29 +150,17 @@ export default {
       const keywords = parseKeywords(raw);
       const reply = stripKeywords(raw) || "응답을 생성하지 못했습니다.";
 
-      return new Response(
-        JSON.stringify({ reply, keywords }),
-        {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        }
-      );
+      return new Response(JSON.stringify({ reply, keywords }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...CORS },
+      });
     } catch (e) {
       const msg = String(e?.message || e);
       const status = msg.includes("API_KEY") || msg.includes("invalid") ? 503 : 500;
-      return new Response(
-        JSON.stringify({ detail: msg }),
-        {
-          status,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        }
-      );
+      return new Response(JSON.stringify({ detail: msg }), {
+        status,
+        headers: { "Content-Type": "application/json", ...CORS },
+      });
     }
   },
 };
